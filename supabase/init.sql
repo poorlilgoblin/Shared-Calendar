@@ -9,6 +9,18 @@ create table if not exists calendars (
   created_at timestamptz default now()
 );
 
+-- allow updates only by the owner
+CREATE POLICY calendar_update
+  ON calendars
+  FOR UPDATE
+  USING (owner_id = auth.uid());
+
+-- allow deletes only by the owner
+CREATE POLICY calendar_delete
+  ON calendars
+  FOR DELETE
+  USING (owner_id = auth.uid());
+
 -- Events table
 create table if not exists events (
   id uuid primary key default uuid_generate_v4(),
@@ -68,3 +80,4 @@ create policy "event_access" on events
         )
     )
   );
+
