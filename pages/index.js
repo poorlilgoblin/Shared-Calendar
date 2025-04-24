@@ -40,7 +40,7 @@ export default function Dashboard({ session }) {
       setErrorMsg('Please enter a calendar title.');
       return;
     }
-
+//
     const payload = {
       title: newTitle.trim(),
       owner_id: session?.user?.id,
