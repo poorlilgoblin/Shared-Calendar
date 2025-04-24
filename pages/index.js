@@ -1,4 +1,3 @@
-```jsx
 // pages/index.js
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
@@ -11,9 +10,10 @@ export default function Dashboard({ session }) {
   const [newTitle, setNewTitle] = useState('');
   const [errorMsg, setErrorMsg] = useState('');
 
-  // Log session for debugging
-  console.log('Current session:', session);
+  // DEBUG: log session
+  console.log('Logged in session:', session);
 
+  // Fetch calendars on mount
   useEffect(() => {
     async function fetchCalendars() {
       setLoading(true);
@@ -21,6 +21,7 @@ export default function Dashboard({ session }) {
         .from('calendars')
         .select('*')
         .order('created_at', { ascending: false });
+
       if (error) {
         console.error('Error loading calendars:', error);
       } else {
@@ -28,41 +29,47 @@ export default function Dashboard({ session }) {
       }
       setLoading(false);
     }
+
     fetchCalendars();
   }, []);
 
+  // Create a new calendar
   const createCalendar = async () => {
-  setErrorMsg('');
-  if (!newTitle.trim()) {
-    setErrorMsg('Please enter a calendar title.');
-    return;
-  }
-  try {
+    setErrorMsg('');
+    if (!newTitle.trim()) {
+      setErrorMsg('Please enter a calendar title.');
+      return;
+    }
+
     const payload = {
       title: newTitle.trim(),
       owner_id: session?.user?.id,
     };
     console.log('Inserting calendar payload:', payload);
-    const { data, error } = await supabase
-      .from('calendars')
-      .insert([payload])
-      .select()
-      .single();
-    if (error) {
-      console.error('Supabase insert error:', error);
-      setErrorMsg(JSON.stringify(error));
-      return;
+
+    try {
+      const { data, error } = await supabase
+        .from('calendars')
+        .insert([payload])
+        .select()      // return the inserted row
+        .single();
+
+      if (error) {
+        console.error('Supabase insert error:', error);
+        setErrorMsg(JSON.stringify(error));
+        return;
+      }
+
+      console.log('Created calendar:', data);
+      setNewTitle('');
+      router.push(`/calendar/${data.id}`);
+    } catch (err) {
+      console.error('Unexpected error:', err);
+      setErrorMsg(err.message ?? JSON.stringify(err));
     }
-    console.log('Created calendar:', data);
-    setNewTitle('');
-    router.push(`/calendar/${data.id}`);
-  } catch (err) {
-    console.error('Unexpected error:', err);
-    setErrorMsg(err.message || JSON.stringify(err));
-  }
-};
+  };
 
-
+  // Sign the user out
   const logout = async () => {
     await supabase.auth.signOut();
     router.replace('/login');
@@ -85,7 +92,7 @@ export default function Dashboard({ session }) {
           type="text"
           placeholder="New calendar title"
           value={newTitle}
-          onChange={e => setNewTitle(e.target.value)}
+          onChange={(e) => setNewTitle(e.target.value)}
           className="p-2 border rounded w-64 mr-2"
         />
         <button
@@ -95,13 +102,15 @@ export default function Dashboard({ session }) {
           Create
         </button>
       </div>
-      {errorMsg && <div className="text-red-600 mb-4">{errorMsg}</div>}
+      {errorMsg && (
+        <div className="text-red-600 mb-4">{errorMsg}</div>
+      )}
 
       {loading ? (
         <div>Loading...</div>
       ) : calendars.length ? (
         <ul className="space-y-4">
-          {calendars.map(cal => (
+          {calendars.map((cal) => (
             <li key={cal.id}>
               <button
                 onClick={() => router.push(`/calendar/${cal.id}`)}
@@ -118,4 +127,3 @@ export default function Dashboard({ session }) {
     </div>
   );
 }
-```
