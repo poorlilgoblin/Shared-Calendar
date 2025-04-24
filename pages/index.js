@@ -19,12 +19,20 @@ export default function Dashboard({ session }) {
       setLoading(false);
     }
     fetchCalendars();
-    const subscription = supabase.from('calendars').on('*', () => fetchCalendars()).subscribe();
+
+    const subscription = supabase
+      .from('calendars')
+      .on('*', () => fetchCalendars())
+      .subscribe();
     return () => supabase.removeSubscription(subscription);
   }, []);
 
   const createCalendar = async () => {
-    const { data } = await supabase.from('calendars').insert([{ title: newTitle.trim() }]).single();
+    if (!newTitle.trim()) return;
+    const { data } = await supabase
+      .from('calendars')
+      .insert([{ title: newTitle.trim() }])
+      .single();
     setNewTitle('');
     router.push(`/calendar/${data.id}`);
   };
@@ -38,30 +46,45 @@ export default function Dashboard({ session }) {
     <div className="p-4">
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-3xl font-bold">Your Calendars</h1>
-        <button onClick={logout} className="px-4 py-2 bg-red-600 text-white rounded">Logout</button>
+        <button onClick={logout} className="px-4 py-2 bg-red-600 text-white rounded">
+          Logout
+        </button>
       </div>
-      <div className="mb-6">
+
+      <div className="mb-6 flex items-center">
         <input
           type="text"
           placeholder="New calendar title"
           value={newTitle}
           onChange={e => setNewTitle(e.target.value)}
-          className="p-2 border rounded mr-2"
+          className="p-2 border rounded w-64 mr-2"
         />
-        <button onClick={createCalendar} className="px-4 py-2 bg-green-600 text-white rounded">Create</button>
+        <button
+          onClick={createCalendar}
+          className="px-4 py-2 bg-green-600 text-white rounded"
+        >
+          Create
+        </button>
       </div>
-      {loading ? <div>Loading...</div> : (
-        calendars.length ? (
-          <ul className="space-y-4">
-            {calendars.map(cal => (
-              <li key={cal.id}>
-                <button onClick={() => router.push(`/calendar/${cal.id}`)} className="text-blue-600 hover:underline text-lg">
-                  {cal.title}
-                </button>
-              </li>
-            ))}
-          </ul>
-        ) : <div>No calendars found. Create one above!</div>
+
+      {loading ? (
+        <div>Loading...</div>
+      ) : calendars.length ? (
+        <ul className="space-y-4">
+          {calendars.map(cal => (
+            <li key={cal.id}>
+              <button
+                onClick={() => router.push(`/calendar/${cal.id}`)}
+                className="text-blue-600 hover:underline text-lg"
+              >
+                {cal.title}
+              </button>
+            </li>
+          ))}
+        </ul>
+      ) : (
+        <div>No calendars found. Create one above!</div>
       )}
     </div>
+  );
 }
