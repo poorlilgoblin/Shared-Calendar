@@ -52,15 +52,19 @@ create policy "calendar_access" on calendars
 
 alter table events enable row level security;
 create policy "event_access" on events
-  for select, insert, update, delete
+  for all
   using (
     exists(
       select 1 from calendars c
-      where c.id = events.calendar_id and (
-        c.owner_id = auth.uid() or exists(
-          select 1 from calendar_users cu
-          where cu.calendar_id = c.id and cu.user_id = auth.uid() and cu.role = 'editor'
+      where c.id = events.calendar_id
+        and (
+          c.owner_id = auth.uid()
+          or exists(
+            select 1 from calendar_users cu
+            where cu.calendar_id = c.id
+              and cu.user_id = auth.uid()
+              and cu.role = 'editor'
+          )
         )
-      )
     )
   );
