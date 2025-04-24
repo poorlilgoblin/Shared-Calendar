@@ -1,3 +1,4 @@
+// pages/index.js
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
 import { supabase } from '../lib/supabaseClient';
@@ -8,6 +9,7 @@ export default function Dashboard({ session }) {
   const [loading, setLoading] = useState(true);
   const [newTitle, setNewTitle] = useState('');
 
+  // Fetch calendars on mount
   useEffect(() => {
     async function fetchCalendars() {
       setLoading(true);
@@ -15,48 +17,40 @@ export default function Dashboard({ session }) {
         .from('calendars')
         .select('*')
         .order('created_at', { ascending: false });
-      if (data) setCalendars(data);
+
+      if (error) {
+        console.error('Error loading calendars:', error);
+      } else {
+        setCalendars(data);
+      }
       setLoading(false);
     }
+
     fetchCalendars();
-
-      // create a channel scoped to all changes in "calendars"
-    const channel = supabase
-      .channel('public:calendars')
-      .on(
-        'postgres_changes',
-        { event: '*', schema: 'public', table: 'calendars' },
-        () => {
-          fetchCalendars();
-        }
-      )
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
-
   }, []);
 
-     const createCalendar = async () => {
-     if (!newTitle.trim()) return;
--    const { data } = await supabase.from('calendars').insert([{ title: newTitle.trim() }]).single();
-+    const { data, error } = await supabase
-+      .from('calendars')
-+      .insert([{
-+        title: newTitle.trim(),
-+        owner_id: session.user.id      // <— set the owner
-+      }])
-+      .single();
-     if (error) {
-       console.error('Error creating calendar:', error);
-       return;
-     }
-     setNewTitle('');
-     router.push(`/calendar/${data.id}`);
-   };
+  // Create a new calendar, setting owner_id to the current user
+  const createCalendar = async () => {
+    if (!newTitle.trim()) return;
 
+    const { data, error } = await supabase
+      .from('calendars')
+      .insert([{
+        title: newTitle.trim(),
+        owner_id: session.user.id
+      }])
+      .single();
 
+    if (error) {
+      console.error('Error creating calendar:', error);
+      return;
+    }
+
+    setNewTitle('');
+    router.push(`/calendar/${data.id}`);
+  };
+
+  // Sign out the user
   const logout = async () => {
     await supabase.auth.signOut();
     router.replace('/login');
@@ -66,7 +60,10 @@ export default function Dashboard({ session }) {
     <div className="p-4">
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-3xl font-bold">Your Calendars</h1>
-        <button onClick={logout} className="px-4 py-2 bg-red-600 text-white rounded">
+        <button
+          onClick={logout}
+          className="px-4 py-2 bg-red-600 text-white rounded"
+        >
           Logout
         </button>
       </div>
