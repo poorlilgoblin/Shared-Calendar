@@ -20,11 +20,22 @@ export default function Dashboard({ session }) {
     }
     fetchCalendars();
 
-    const subscription = supabase
-      .from('calendars')
-      .on('*', () => fetchCalendars())
+      // create a channel scoped to all changes in "calendars"
+    const channel = supabase
+      .channel('public:calendars')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'calendars' },
+        () => {
+          fetchCalendars();
+        }
+      )
       .subscribe();
-    return () => supabase.removeSubscription(subscription);
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+
   }, []);
 
   const createCalendar = async () => {
