@@ -32,24 +32,36 @@ export default function Dashboard({ session }) {
   }, []);
 
   const createCalendar = async () => {
-    setErrorMsg('');
-    if (!newTitle.trim()) {
-      setErrorMsg('Please enter a calendar title.');
+  setErrorMsg('');
+  if (!newTitle.trim()) {
+    setErrorMsg('Please enter a calendar title.');
+    return;
+  }
+  try {
+    const payload = {
+      title: newTitle.trim(),
+      owner_id: session?.user?.id,
+    };
+    console.log('Inserting calendar payload:', payload);
+    const { data, error } = await supabase
+      .from('calendars')
+      .insert([payload])
+      .select()
+      .single();
+    if (error) {
+      console.error('Supabase insert error:', error);
+      setErrorMsg(JSON.stringify(error));
       return;
     }
-    try {
-      const { data, error } = await supabase
-        .from('calendars')
-        .insert([{ title: newTitle.trim(), owner_id: session.user.id }])
-        .single();
-      if (error) throw error;
-      setNewTitle('');
-      router.push(`/calendar/${data.id}`);
-    } catch (err) {
-      console.error('Create calendar error:', err);
-      setErrorMsg(err.message);
-    }
-  };
+    console.log('Created calendar:', data);
+    setNewTitle('');
+    router.push(`/calendar/${data.id}`);
+  } catch (err) {
+    console.error('Unexpected error:', err);
+    setErrorMsg(err.message || JSON.stringify(err));
+  }
+};
+
 
   const logout = async () => {
     await supabase.auth.signOut();
