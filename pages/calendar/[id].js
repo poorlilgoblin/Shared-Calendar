@@ -26,14 +26,34 @@ export default function CalendarPage() {
     }
     fetchEvents();
 
-    const subscription = supabase
-      .from(`events:calendar_id=eq.${calendarId}`)
-      .on('INSERT', payload => setEvents(prev => [...prev, payload.new]))
-      .on('UPDATE', payload => setEvents(prev => prev.map(evt => evt.id === payload.new.id ? payload.new : evt)))
-      .on('DELETE', payload => setEvents(prev => prev.filter(evt => evt.id !== payload.old.id)))
+        const channel = supabase
+      .channel(`public:events:calendar_id=eq.${calendarId}`)
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'events',
+          filter: `calendar_id=eq.${calendarId}`
+        },
+        payload => {
+          if (payload.eventType === 'INSERT') {
+            setEvents(prev => [...prev, payload.record]);
+          } else if (payload.eventType === 'UPDATE') {
+            setEvents(prev =>
+              prev.map(e => (e.id === payload.record.id ? payload.record : e))
+            );
+          } else if (payload.eventType === 'DELETE') {
+            setEvents(prev => prev.filter(e => e.id !== payload.old.id));
+          }
+        }
+      )
       .subscribe();
 
-    return () => supabase.removeSubscription(subscription);
+    return () => {
+      supabase.removeChannel(channel);
+    };
+
   }, [calendarId]);
 
   if (loading) return <div>Loading calendar...</div>;
