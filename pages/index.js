@@ -38,15 +38,24 @@ export default function Dashboard({ session }) {
 
   }, []);
 
-  const createCalendar = async () => {
-    if (!newTitle.trim()) return;
-    const { data } = await supabase
-      .from('calendars')
-      .insert([{ title: newTitle.trim() }])
-      .single();
-    setNewTitle('');
-    router.push(`/calendar/${data.id}`);
-  };
+     const createCalendar = async () => {
+     if (!newTitle.trim()) return;
+-    const { data } = await supabase.from('calendars').insert([{ title: newTitle.trim() }]).single();
++    const { data, error } = await supabase
++      .from('calendars')
++      .insert([{
++        title: newTitle.trim(),
++        owner_id: session.user.id      // <— set the owner
++      }])
++      .single();
+     if (error) {
+       console.error('Error creating calendar:', error);
+       return;
+     }
+     setNewTitle('');
+     router.push(`/calendar/${data.id}`);
+   };
+
 
   const logout = async () => {
     await supabase.auth.signOut();
