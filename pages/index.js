@@ -1,3 +1,4 @@
+```jsx
 // pages/index.js
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
@@ -8,8 +9,11 @@ export default function Dashboard({ session }) {
   const [calendars, setCalendars] = useState([]);
   const [loading, setLoading] = useState(true);
   const [newTitle, setNewTitle] = useState('');
+  const [errorMsg, setErrorMsg] = useState('');
 
-  // Fetch calendars on mount
+  // Log session for debugging
+  console.log('Current session:', session);
+
   useEffect(() => {
     async function fetchCalendars() {
       setLoading(true);
@@ -17,7 +21,6 @@ export default function Dashboard({ session }) {
         .from('calendars')
         .select('*')
         .order('created_at', { ascending: false });
-
       if (error) {
         console.error('Error loading calendars:', error);
       } else {
@@ -25,32 +28,29 @@ export default function Dashboard({ session }) {
       }
       setLoading(false);
     }
-
     fetchCalendars();
   }, []);
 
-  // Create a new calendar, setting owner_id to the current user
   const createCalendar = async () => {
-    if (!newTitle.trim()) return;
-
-    const { data, error } = await supabase
-      .from('calendars')
-      .insert([{
-        title: newTitle.trim(),
-        owner_id: session.user.id
-      }])
-      .single();
-
-    if (error) {
-      console.error('Error creating calendar:', error);
+    setErrorMsg('');
+    if (!newTitle.trim()) {
+      setErrorMsg('Please enter a calendar title.');
       return;
     }
-
-    setNewTitle('');
-    router.push(`/calendar/${data.id}`);
+    try {
+      const { data, error } = await supabase
+        .from('calendars')
+        .insert([{ title: newTitle.trim(), owner_id: session.user.id }])
+        .single();
+      if (error) throw error;
+      setNewTitle('');
+      router.push(`/calendar/${data.id}`);
+    } catch (err) {
+      console.error('Create calendar error:', err);
+      setErrorMsg(err.message);
+    }
   };
 
-  // Sign out the user
   const logout = async () => {
     await supabase.auth.signOut();
     router.replace('/login');
@@ -83,6 +83,7 @@ export default function Dashboard({ session }) {
           Create
         </button>
       </div>
+      {errorMsg && <div className="text-red-600 mb-4">{errorMsg}</div>}
 
       {loading ? (
         <div>Loading...</div>
@@ -105,3 +106,4 @@ export default function Dashboard({ session }) {
     </div>
   );
 }
+```
