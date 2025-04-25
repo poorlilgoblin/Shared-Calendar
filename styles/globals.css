@@ -1,1 +1,34 @@
 /* Add your global styles or Tailwind imports here */
+/* Global calendar styles */
+* { box-sizing: border-box; }
+body { font-family: 'Segoe UI', sans-serif; margin: 0; background-color: #f7f9fc; color: #333; }
+h1 { text-align: center; padding: 1rem; font-size: 2rem; }
+.settings { display: flex; justify-content: center; gap: 1rem; flex-wrap: wrap; margin-bottom: 1rem; }
+.calendar { display: flex; flex-wrap: wrap; justify-content: center; gap: 1rem; padding: 1rem; }
+.month { background: #fff; border: 1px solid #ddd; border-radius: 8px; width: 300px; padding: 10px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+.month h3 { text-align: center; margin: 0.5rem 0; }
+.days { display: grid; grid-template-columns: repeat(7, 1fr); }
+.day { border: 1px solid #eee; min-height: 60px; padding: 4px; position: relative; cursor: pointer; font-size: 0.8rem; }
+.event-bar { position: absolute; height: 6px; border-radius: 3px; left: 2px; right: 2px; }
+.tooltip { position: absolute; background: #222; color: #fff; padding: 6px; border-radius: 4px; font-size: 0.75rem; display: none; z-index: 999; max-width: 200px; }
+.modal-backdrop { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.4); display: none; align-items: center; justify-content: center; z-index: 1000; }
+.modal { background: #fff; padding: 20px; border-radius: 10px; width: 300px; box-shadow: 0 4px 10px rgba(0,0,0,0.2); }
+.modal h2 { margin-top: 0; }
+.modal input[type="text"] { width: 100%; padding: 8px; margin-bottom: 10px; border: 1px solid #ccc; border-radius: 4px; }
+.modal-actions { display: flex; justify-content: space-between; }
+.modal-actions button { flex: 1; margin: 0 5px; padding: 8px; font-weight: bold; }
+#addFab { position: fixed; bottom: 20px; right: 20px; width: 56px; height: 56px; border-radius: 50%; background: #6200ee; color: #fff; border: none; font-size: 2rem; display: none; align-items: center; justify-content: center; cursor: pointer; box-shadow: 0 4px 8px rgba(0,0,0,0.2); z-index: 1000; }
+
+/* Spread list items vertically */
+#listModal ul { list-style: none; padding: 0; margin: 0; }
+#listModal ul li { padding: 16px 0; border-bottom: 1px solid #eee; }
+#listModal ul li:last-child { border-bottom: none; }
+
+/* Dark theme overrides */
+body.dark { background-color: #121212; color: #eee; }
+body.dark .month { background: #1e1e1e; border-color: #444; box-shadow: 0 2px 4px rgba(255,255,255,0.05); }
+body.dark .day { border-color: #333; }
+body.dark .tooltip { background: #444; }
+body.dark .modal { background: #222; color: #fff; }
+body.dark .modal input[type="text"] { background: #333; color: white; border-color: #555; }
+body.dark .modal-actions button { background: #333; color: #fff; border: 1px solid #555; }
