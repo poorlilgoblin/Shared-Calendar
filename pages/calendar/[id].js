@@ -22,7 +22,7 @@ export default function CalendarPage({ session }) {
 
   // invite modal
   const [inviteOpen, setInviteOpen] = useState(false);
-
+ 
   // theme
   const [themeMode, setThemeMode] = useState(
     () => localStorage.getItem('themeMode') || 'system'
