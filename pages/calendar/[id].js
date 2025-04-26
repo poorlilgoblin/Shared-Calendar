@@ -9,20 +9,29 @@ export default function CalendarPage({ session }) {
   const router = useRouter();
   const calendarId = router.query.id;
 
+  // event list & loading flag
   const [events, setEvents] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  // Event modal state
+  // modal state
   const [modalOpen, setModalOpen] = useState(false);
   const [editingEvent, setEditingEvent] = useState(null);
   const [modalDate, setModalDate] = useState(null);
   const titleRef = useRef();
   const colorRef = useRef();
 
-  // Invite modal
+  // invite modal
   const [inviteOpen, setInviteOpen] = useState(false);
 
-  // Load events
+  // theme
+  const [themeMode, setThemeMode] = useState(
+    () => localStorage.getItem('themeMode') || 'system'
+  );
+  const [manualDark, setManualDark] = useState(
+    () => localStorage.getItem('manualDark') === 'true'
+  );
+
+  // load events from Supabase
   useEffect(() => {
     if (!calendarId) return;
     setLoading(true);
@@ -34,29 +43,53 @@ export default function CalendarPage({ session }) {
         setEvents(
           data.map(evt => ({
             ...evt,
-            date_key: evt.date.split('T')[0] // ensure YYYY-MM-DD
+            date_key: evt.date.split('T')[0], // "YYYY-MM-DD"
           }))
         );
         setLoading(false);
       });
   }, [calendarId]);
 
-  // Open event modal
+  // apply theme
+  useEffect(() => {
+    const apply = () => {
+      let useDark = false;
+      if (themeMode === 'system') {
+        useDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+      } else if (themeMode === 'time') {
+        const h = new Date().getHours();
+        useDark = h < 6 || h >= 19;
+      } else {
+        useDark = manualDark;
+      }
+      document.body.classList.toggle('dark', useDark);
+      localStorage.setItem('themeMode', themeMode);
+      localStorage.setItem('manualDark', manualDark);
+    };
+    apply();
+    window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', apply);
+  }, [themeMode, manualDark]);
+
+  // open the add/edit modal
   function openModal(dateKey, evt = null) {
     setEditingEvent(evt);
     setModalDate(dateKey);
     setModalOpen(true);
+    // preload inputs
     setTimeout(() => {
       titleRef.current.value = evt?.title || '';
       colorRef.current.value = evt?.color || '';
     }, 0);
   }
 
-  // Save or update event
+  // save or update event
   async function saveEvent() {
     const title = titleRef.current.value.trim();
     const color = colorRef.current.value.trim() || 'purple';
-    if (!title) return alert('Title cannot be blank');
+    if (!title) {
+      alert('Event title can’t be blank');
+      return;
+    }
 
     const payload = {
       calendar_id: calendarId,
@@ -76,7 +109,7 @@ export default function CalendarPage({ session }) {
       await supabase.from('events').insert(payload);
     }
 
-    // refresh list
+    // reload events
     const { data } = await supabase
       .from('events')
       .select('*')
@@ -87,10 +120,11 @@ export default function CalendarPage({ session }) {
         date_key: evt.date.split('T')[0],
       }))
     );
+
     setModalOpen(false);
   }
 
-  // Delete event
+  // delete event
   async function deleteEvent() {
     if (!editingEvent) return;
     await supabase.from('events').delete().eq('id', editingEvent.id);
@@ -98,7 +132,7 @@ export default function CalendarPage({ session }) {
     setModalOpen(false);
   }
 
-  if (loading) return <div>Loading...</div>;
+  if (loading) return <div>Loading…</div>;
   if (!session) return <div>Please sign in</div>;
 
   return (
@@ -114,14 +148,37 @@ export default function CalendarPage({ session }) {
         </button>
       </div>
 
-      {/* Calendar Grid */}
+      {/* Theme selector */}
+      <div className="settings">
+        <label>Theme:</label>
+        <select
+          value={themeMode}
+          onChange={e => setThemeMode(e.target.value)}
+        >
+          <option value="system">System</option>
+          <option value="time">Time</option>
+          <option value="manual">Manual</option>
+        </select>
+        {themeMode === 'manual' && (
+          <label style={{ marginLeft: '8px' }}>
+            <input
+              type="checkbox"
+              checked={manualDark}
+              onChange={e => setManualDark(e.target.checked)}
+            />{' '}
+            Dark
+          </label>
+        )}
+      </div>
+
+      {/* The calendar grid */}
       <CalendarGrid
         year={new Date().getFullYear()}
         events={events}
         onDayClick={dateKey => openModal(dateKey)}
       />
 
-      {/* Event Modal */}
+      {/* Event modal */}
       {modalOpen && (
         <div className="modal-backdrop" style={{ display: 'flex' }}>
           <div className="modal">
@@ -136,7 +193,7 @@ export default function CalendarPage({ session }) {
         </div>
       )}
 
-      {/* Invite Modal */}
+      {/* Invite modal */}
       {inviteOpen && (
         <InviteModal
           calendarId={calendarId}
