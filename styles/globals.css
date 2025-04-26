@@ -32,3 +32,27 @@ body.dark .tooltip { background: #444; }
 body.dark .modal { background: #222; color: #fff; }
 body.dark .modal input[type="text"] { background: #333; color: white; border-color: #555; }
 body.dark .modal-actions button { background: #333; color: #fff; border: 1px solid #555; }
+
+/* make the header and settings sit above the calendar grid */
+.settings, .p-4.flex.justify-between, .p-4 {
+  position: relative;
+  z-index: 10;
+}
+
+/* ensure the modal backdrop covers the full viewport above the grid */
+.modal-backdrop {
+  display: none;           /* we toggle it on inline via JS when open */
+  position: fixed;         /* cover entire screen */
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 9999;           /* on top */
+}
+
+/* and the modal itself above the backdrop */
+.modal {
+  position: relative;
+  z-index: 10000;
+}
+
