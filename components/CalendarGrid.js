@@ -18,13 +18,14 @@ export default function CalendarGrid({ year, events = [], onDayClick }) {
         const firstDay = new Date(year, mIndex, 1).getDay();
         const pad = firstDay === 0 ? 6 : firstDay - 1;
 
-        // render padding cells
+        // build all day cells (pads + dates)
         const cells = [];
+
+        // empty pad cells
         for (let i = 0; i < pad; i++) {
           cells.push(<div key={`pad-${mIndex}-${i}`} />);
         }
-
-        // render day cells
+        // actual date cells
         for (let day = 1; day <= daysInMonth(mIndex, year); day++) {
           const dateKey = `${year}-${mIndex + 1}-${day}`;
           const dayEvents = events.filter(evt => evt.date_key === dateKey);
@@ -33,14 +34,17 @@ export default function CalendarGrid({ year, events = [], onDayClick }) {
             <div
               key={dateKey}
               className="day"
-              onClick={() => onDayClick && onDayClick(dateKey)}
+              onClick={() => onDayClick?.(dateKey)}
             >
               {day}
               {dayEvents.map((evt, idx) => (
                 <div
                   key={idx}
                   className="event-bar"
-                  style={{ bottom: `${2 + idx * 8}px`, backgroundColor: evt.color || 'purple' }}
+                  style={{
+                    bottom: `${2 + idx * 8}px`,
+                    backgroundColor: evt.color || 'purple'
+                  }}
                 />
               ))}
             </div>
